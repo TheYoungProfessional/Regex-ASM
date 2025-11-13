@@ -51,3 +51,52 @@ la $a0, inputBuffer2 #setting a0 to the space we reserved in the memory
 li $a1, 200 #allocating space of size 200
 syscall
 
+li $t1, 0 #initializing tmp registers and s registers to 0 for reuse after being used in previous functions
+li $t2, 0 
+li $t3, 0 
+li $t4, 0 
+li $t6, 0 
+li $t7, 0 
+li $t8, 0 
+li $t9, 0 
+li $s1, '['
+li $s2, ']'
+li $s3, '.'
+li $s4, '*'
+#li $s5, '\'
+li $s6, '^'
+li $s7, '-'
+
+la $t0, inputBuffer1
+la $t1, inputBuffer2
+
+parseBuffer:
+lb $t0, 0($t0)  #loading byte 
+lb $t1, 0($t0)
+beq $t0, $s1, startBracket
+beq $t0, $s2, endBracket
+beq $t0, $s3, matchAny
+beq $t0, $s4, unboundedMatch
+beq $t0, $s5, escape
+beq $t0, $s6, negate
+beq $t0, $s7, hyphen
+
+matchLoop:
+beq 
+j matchLoop
+
+lb $t0, inputBuffer1
+lb $t1, inputBuffer2
+
+
+
+
+countLoop:
+
+j countLoop
+
+
+li $t0, 0
+li $t1, 0
+
+
