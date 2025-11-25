@@ -4,8 +4,9 @@
 
 #
 
+#
 
-
+#
 .data
 
 userInput1:.asciiz "Please enter a regex to process: "
@@ -71,7 +72,6 @@ la $t4, storeBuffer #storing range to process user input
 li $s3, 0 #flag indicating whether there is a range of values to match- 0 if no range 1 if there is a range
 li $s4, 0 #using this to count how many elements are present for matches without [], for example, abc
 li $t5, 0 
-li $t5, 0 
 li $t6, 0
 li $t7, 0
 li $t8, 0
@@ -111,22 +111,26 @@ li $s3, 0 #setting no range flag to 0
 la $t4, storeBuffer
 
 parseNoRangeLoop:
-li $t6, ']'
-beq $t1, $t6, doneNoRangeLoop #finish when we reach ]
+beq $t1, $zero, doneNoRangeLoop #finish when we reach ]
 lb $t1, 0($t0)
 sb $t1, 0($t4)    #storing string to buffer to process 
 addi $t4, $t4, 1
 addi $t0, $t0, 1
+li $t6, '*'
+beq $t6, $t1, parseStarNoRange
 j parseNoRangeLoop
 
 doneNoRangeLoop:
 j matchStart
 
+parseStarNoRange:
+li $t2, 1
+
 doneParse:
-addi $t0, $t0, 1
 lb $t1, 0($t0) 
 li $t6, '*'
 beq $t6, $t1, parseStar
+j matchStart
 
 parseStar:
 li $t2, 1 #setting star flag to 1
@@ -140,8 +144,8 @@ parseRange:
 li $s3, 1
 lb $s0, 0($t0) #storing the lesser value in the range
 lb $s1, 2($t0)    #storing the greater value in the range
-beq $t6, $t1, doneParse #finish parsing brackets 
-j matchStart
+addi $t0, $t0, 4
+j doneParse
 
 
 #############################################################################################################
@@ -151,29 +155,29 @@ j matchStart
 ############################################################################################################
 
 matchStart:
+li $t5, 0
 la $t0, regexBuffer
 la $t4, storeBuffer
-la $t8, inputBuffer
+move $t5, $t4
+la $t8, inputBuffer #holds input for non range values, ex:abc, etc
 li $t9, ']'
-
-bne $t3, $zero, matchBracket
-
+bne $t3, $zero, matchBracket #if flag for bracket is 1, process within bracket
+j matchNoBracket
+#######################################################################################################
 matchNoBracket: #NEED TO IMPLEMENT
 jr $ra
 
 matchBracket:
-j matchRange
+beq $s3, $zero, matchNoRange #if flag for range is zero, process value within bracket not as a range
 
 #bne $s2, $zero, matchNegation
-#beq $s3, $zero, matchNoRange
-
+#####################################################################################################
 matchRange:
+bne $t2, $zero, matchStarRange #Checking if input entered is in the format [a-z]*
 lb $t7, 0($t8) #pointer to input buffer
 beq $t7, $zero, donePrint
-#bne $t2, $zero, matchStarRange
-blt $t7, $s0, nextChar
-bgt $t7, $s1, nextChar
-
+blt $t7, $s0, nextCharRange
+bgt $t7, $s1, nextCharRange
 
 li $v0, 11
 move $a0, $t7
@@ -183,31 +187,121 @@ li $v0, 4
 la $a0, comma #print comma between each character
 syscall 
 
-nextChar:
+nextCharRange:
 addi $t8, $t8, 1
 j matchRange
 
 donePrint:
 li $v0, 10
 syscall
-
-
+####################################################################################
 matchNegation:
+######################################################################################
 
-matchStarRange:
 matchNoRange:
+li $t3, 0
+bne $t2, $zero, matchStarNoRange #Checking if input entered is in the format [a-z]*
+lb $t7, 0($t8) #pointer to input buffer
+move $t4, $t5 #pointing to start 
+beq $t7, $zero, donePrint #ending print when we reach end of line 
 
+noRangeLoop:
+lb $t6, 0($t4)
+beq $t6, $zero, nextCharNoRange
+beq $t7, $t6, printNoRange
+addi $t4, $t4, 1
+j noRangeLoop
 
+printNoRange:
+li $v0, 11
+move $a0, $t7
+syscall
 
+li $v0, 4
+la $a0, comma #print comma between each character
+syscall 
 
+nextCharNoRange:
+addi $t8, $t8, 1
+j matchNoRange
 
+######################################################################################
+matchStarRange:
+li $t6, ','
+li $t5, 0 #we will use this to indicate whether ',' has been printed or not
 
+matchStarLoop:
+lb $t7, 0($t8) #pointer to input buffer 
+beq $t7, $zero, donePrintStar
+blt $t7, $s0, nextStarChar
+bgt $t7, $s1, nextStarChar
 
+li $v0, 11
+move $a0, $t7
+syscall
 
+li $t5, 1
+addi $t8, $t8, 1
 
+j matchStarLoop
 
+nextStarChar:
+beq $t5, $zero, skipComma
+li $v0, 4
+la $a0, comma #print comma between each character
+syscall 
 
+li $t5, 0
 
+skipComma:
+addi $t8, $t8, 1
+j matchStarLoop
+
+donePrintStar:
+li $v0, 10
+syscall
+
+######################################################################################
+
+matchStarNoRange:
+li $t6, ','
+lb $t7, 0($t8) #pointer to input buffer
+move $t4, $t5 #pointing to start to the store buffer
+beq $t7, $zero, donePrint #ending print when we reach end of line 
+
+# we iterate through each character in the store buffer, and print matches 
+noStarRangeLoop:
+lb $t6, 0($t4)
+beq $t6, $zero, nextStarNoRange #going to next char in store buffer to check if we reach the end
+beq $t7, $t6, printNoStarRange
+beq $t3, $zero, printCommaStar
+addi $t4, $t4, 1
+j noStarRangeLoop
+
+printCommaStar:
+bne $t3, $zero, noComma
+
+li $v0, 4
+la $a0, comma #print comma between each character
+syscall 
+
+li $t3, 1
+
+j noStarRangeLoop
+
+noComma:
+addi $t4, $t4, 1
+j noStarRangeLoop
+
+printNoStarRange:
+li $v0, 11
+move $a0, $t7
+syscall
+bne $t3, $zero, noComma
+
+nextStarNoRange:
+addi $t8, $t8, 1
+j matchStarNoRange
 
 
 
