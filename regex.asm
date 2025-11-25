@@ -59,8 +59,8 @@ syscall
 
 ############################################################################################################
 
-parseRegex:
-la $t0, regexBuffer
+parseRegex: #initiate parsing
+la $t0, regexBuffer #
 la $t4 storeBuffer #where we will store ranges/ strings like abc to match
 li $t1, 0 #initializing tmp registers and s registers to 0 for reuse after being used in previous functions
 li $t2, 0  #flag indicating we have to process *
@@ -77,7 +77,7 @@ li $t7, 0
 li $t8, 0
 li $t9, 0
 
-lb $t1, 0($t0)
+lb $t1, 0($t0) #loads in regex
 li $t6, '['
 beq $t1, $t6, parseBrackets
 
@@ -187,7 +187,7 @@ li $v0, 4
 la $a0, comma #print comma between each character
 syscall 
 
-nextCharRange:
+nextCharRange: #look to next character in range, run match logic again
 addi $t8, $t8, 1
 j matchRange
 
@@ -270,7 +270,7 @@ move $t4, $t5 #pointing to start to the store buffer
 beq $t7, $zero, donePrint #ending print when we reach end of line 
 
 # we iterate through each character in the store buffer, and print matches 
-noStarRangeLoop:
+starNoRangeLoop:
 lb $t6, 0($t4)
 beq $t6, $zero, nextStarNoRange #going to next char in store buffer to check if we reach the end
 beq $t7, $t6, printNoStarRange
@@ -293,7 +293,7 @@ noComma:
 addi $t4, $t4, 1
 j noStarRangeLoop
 
-printNoStarRange:
+printStarNoRange:
 li $v0, 11
 move $a0, $t7
 syscall
@@ -302,49 +302,3 @@ bne $t3, $zero, noComma
 nextStarNoRange:
 addi $t8, $t8, 1
 j matchStarNoRange
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
