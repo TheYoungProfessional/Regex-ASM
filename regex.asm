@@ -77,19 +77,19 @@ li $t7, 0
 li $t8, 0
 li $t9, 0
 
-lb $t1, 0($t0)
+lb $t1, 0($t0) #pointer to regex buffer
 li $t6, '['
 beq $t1, $t6, parseBrackets
 
 parseNoBrackets:
 li $t3, 0   #we set the flag indicating brackets to 0
-la $t4, storeBuffer
+la $t4, storeBuffer #extra buffer to store plain values 
 
 noBracketLoop: #jumping to this loop if no brackets are present
 lb $t1, 0($t0)
 beq $t1, $zero, doneNoBracketLoop #when we reach end of line we end the loop
 addi $t0, $t0, 1
-addi $s4, $s4, 1  #count the number of elements to print exact match for regex with no brackets
+sb $s4, 0($t0)
 j noBracketLoop
 
 doneNoBracketLoop:
@@ -99,12 +99,30 @@ parseBrackets:
 addi $t0, $t0, 1
 li $t3, 1   #setting bracket flag to 1, telling code we have brackets
 lb $t1, 0($t0)
-lb $t5, 1($t0)
 li $t7, '^'
-beq $t5, $t7, parseNegation
+beq $t1, $t7, parseNegation
+
+lb $t5, 1($t0) #peeking ahead by a byte (the '[' bracket) to see if there is a ^ after it
 li $t6, '-'
 beq $t5, $t6, parseRange
 j parseNoRange
+
+parseNegation:
+addi $t0, $t0, 1
+li $s2, 1   #setting s2 to 1 to indicate that negation boolean = 1 
+li $s3, 1   #setting s3 to 1 indicating range is present
+lb $s0, 0($t0) #storing the lesser value in the range
+addi $t0, $t0, 2
+lb $s1, 0($t0)    #storing the greater value in the range
+li $v0, 11
+move $a0, $s0
+syscall
+li $v0, 11
+move $a0, $s1
+syscall
+addi $t0, $t0, 1
+j doneParse
+
 
 parseNoRange:
 li $s3, 0 #setting no range flag to 0
@@ -136,15 +154,11 @@ parseStar:
 li $t2, 1 #setting star flag to 1
 j matchStart
 
-parseNegation:
-li $s2, 1
-addi $t0, $t0, 1
-
 parseRange:
-li $s3, 1
+li $s3, 1   #setting s3 to 1 indicating range is present
 lb $s0, 0($t0) #storing the lesser value in the range
 lb $s1, 2($t0)    #storing the greater value in the range
-addi $t0, $t0, 4
+addi $t0, $t0, 1
 j doneParse
 
 
@@ -169,10 +183,12 @@ jr $ra
 
 matchBracket:
 beq $s3, $zero, matchNoRange #if flag for range is zero, process value within bracket not as a range
+bne $s2, $zero, negateStarRange
 
 #bne $s2, $zero, matchNegation
 #####################################################################################################
 matchRange:
+bne $s2, $zero, negateStarRange
 bne $t2, $zero, matchStarRange #Checking if input entered is in the format [a-z]*
 lb $t7, 0($t8) #pointer to input buffer
 beq $t7, $zero, donePrint
@@ -227,6 +243,7 @@ j matchNoRange
 
 ######################################################################################
 matchStarRange:
+beq $s2, $zero, matchStarNoRange
 li $t6, ','
 li $t5, 0 #we will use this to indicate whether ',' has been printed or not
 
@@ -263,6 +280,9 @@ syscall
 
 ######################################################################################
 
+#[abc]* test case RUNNING ERRORS BEING FIXED INCOMPLETE
+
+######################################################################################
 matchStarNoRange:
 li $t6, ','
 lb $t7, 0($t8) #pointer to input buffer
@@ -303,7 +323,45 @@ nextStarNoRange:
 addi $t8, $t8, 1
 j matchStarNoRange
 
+###############################################
 
+#[^A-Z]* test case INCOMPLETE
+
+negateStarRange:
+beq $s2, $zero, negateStarRange
+li $t6, ','
+li $t5, 0 #we will use this to indicate whether ',' has been printed or not
+
+negateStarLoop:
+lb $t7, 0($t8) #pointer to input buffer 
+beq $t7, $zero, doneNegate
+blt $t7, $s0, nextNegate
+bgt $t7, $s1, nextNegate
+j skipNegateComma
+
+nextNegate:
+bne $t5, $zero, negateComma
+
+li $v0, 11
+move $a0, $t7
+syscall
+
+addi $t8, $t8, 1
+li $t5, 1
+j negateStarLoop
+
+negateComma: 
+li $v0, 4
+la $a0, comma #print comma between each character
+syscall 
+
+skipNegateComma:
+addi $t8, $t8, 1
+j negateStarLoop
+
+doneNegate:
+li $v0, 10
+syscall
 
 
 
