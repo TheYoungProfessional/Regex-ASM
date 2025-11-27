@@ -114,12 +114,6 @@ li $s3, 1   #setting s3 to 1 indicating range is present
 lb $s0, 0($t0) #storing the lesser value in the range
 addi $t0, $t0, 2
 lb $s1, 0($t0)    #storing the greater value in the range
-li $v0, 11
-move $a0, $s0
-syscall
-li $v0, 11
-move $a0, $s1
-syscall
 addi $t0, $t0, 1
 j doneParse
 
@@ -254,7 +248,7 @@ blt $t7, $s0, nextStarChar
 bgt $t7, $s1, nextStarChar
 
 li $v0, 11
-move $a0, $t7
+move $a0, $t7 #printing char if it matches
 syscall
 
 li $t5, 1
@@ -283,49 +277,34 @@ syscall
 #[abc]* test case RUNNING ERRORS BEING FIXED INCOMPLETE
 
 ######################################################################################
-matchStarNoRange:
-li $t6, ','
+matchStarNoRange
 lb $t7, 0($t8) #pointer to input buffer
-move $t4, $t5 #pointing to start to the store buffer
+move $t4, $t5 #pointing to start 
 beq $t7, $zero, donePrint #ending print when we reach end of line 
 
-# we iterate through each character in the store buffer, and print matches 
-noStarRangeLoop:
+noRangeLoop:
 lb $t6, 0($t4)
-beq $t6, $zero, nextStarNoRange #going to next char in store buffer to check if we reach the end
-beq $t7, $t6, printNoStarRange
-beq $t3, $zero, printCommaStar
+beq $t6, $zero, nextCharNoRange #store buffer
+beq $t7, $t6, printNoRange
 addi $t4, $t4, 1
-j noStarRangeLoop
+j noRangeLoop
 
-printCommaStar:
-bne $t3, $zero, noComma
+printNoRange:
+li $v0, 11
+move $a0, $t7
+syscall
 
 li $v0, 4
 la $a0, comma #print comma between each character
 syscall 
 
-li $t3, 1
-
-j noStarRangeLoop
-
-noComma:
-addi $t4, $t4, 1
-j noStarRangeLoop
-
-printNoStarRange:
-li $v0, 11
-move $a0, $t7
-syscall
-bne $t3, $zero, noComma
-
-nextStarNoRange:
+nextCharNoRange:
 addi $t8, $t8, 1
-j matchStarNoRange
+j matchNoRange
 
 ###############################################
 
-#[^A-Z]* test case INCOMPLETE
+#[^A-Z]* test case 
 
 negateStarRange:
 beq $s2, $zero, negateStarRange
@@ -335,25 +314,28 @@ li $t5, 0 #we will use this to indicate whether ',' has been printed or not
 negateStarLoop:
 lb $t7, 0($t8) #pointer to input buffer 
 beq $t7, $zero, doneNegate
-blt $t7, $s0, nextNegate
-bgt $t7, $s1, nextNegate
-j skipNegateComma
+blt $t7, $s0, printNegate
+bgt $t7, $s1, printNegate
+j checkComma
 
-nextNegate:
-bne $t5, $zero, negateComma
-
+printNegate:
 li $v0, 11
 move $a0, $t7
 syscall
 
+li $t5, 0 #setting flag to 1 after we have printed
+
 addi $t8, $t8, 1
-li $t5, 1
 j negateStarLoop
 
-negateComma: 
+checkComma: #checks if a comma should be printed
+bne $t5, $zero, skipNegateComma #we skip printing comma if the flag is 1
+
 li $v0, 4
 la $a0, comma #print comma between each character
 syscall 
+
+li $t5, 1
 
 skipNegateComma:
 addi $t8, $t8, 1
