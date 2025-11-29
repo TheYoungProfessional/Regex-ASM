@@ -210,7 +210,7 @@ matchNegation:
 
 matchNoRange:
 li $t3, 0
-bne $t2, $zero, matchStarNoRange #Checking if input entered is in the format [a-z]*
+bne $t2, $zero, matchStarNoRange #Checking if input entered is in the format [avz]*
 lb $t7, 0($t8) #pointer to input buffer
 move $t4, $t5 #pointing to start 
 beq $t7, $zero, donePrint #ending print when we reach end of line 
@@ -274,33 +274,61 @@ syscall
 
 ######################################################################################
 
-#[abc]* test case RUNNING ERRORS BEING FIXED INCOMPLETE
+#[abc]* test case 
 
 ######################################################################################
-matchStarNoRange
-lb $t7, 0($t8) #pointer to input buffer
+matchStarNoRange:
+li $t3,1
+
+matchStarNoRangeLoop:
 move $t4, $t5 #pointing to start 
-beq $t7, $zero, donePrint #ending print when we reach end of line 
+lb $t7, 0($t8) #pointer to input buffer 
+beq $t7, $zero, doneNoRangePrint #ending print when we reach end of line 
+li $t2, 0
 
-noRangeLoop:
-lb $t6, 0($t4)
-beq $t6, $zero, nextCharNoRange #store buffer
-beq $t7, $t6, printNoRange
-addi $t4, $t4, 1
-j noRangeLoop
+noRangeStarLoop:
+lb $t6, 0($t4) #pointer to store buffer
+beq $t6, $zero, printStarCommaMaybe
+beq $t7, $zero, doneNoRangePrint
+beq $t7, $t6, matchElement
+addi $t4, $t4,1
+j noRangeStarLoop
 
-printNoRange:
-li $v0, 11
-move $a0, $t7
-syscall
+matchElement:
+li $t2, 1
+
+printStarCommaMaybe:
+beq $t2, $zero, skipCommaNoRange
+beq $t3, $zero, printCharStarRange
 
 li $v0, 4
 la $a0, comma #print comma between each character
 syscall 
 
-nextCharNoRange:
+printCharStarRange:
+li $v0, 11
+move $a0, $t7
+syscall
+
+li $t3, 0
+
 addi $t8, $t8, 1
-j matchNoRange
+j matchStarNoRangeLoop
+
+nextElement:
+addi $t4, $t4, 1
+j noRangeStarLoop
+
+skipCommaNoRange:
+li $t3, 1
+addi $t8, $t8, 1
+j matchStarNoRangeLoop
+
+doneNoRangePrint:
+li $v0, 10
+syscall
+
+
 
 ###############################################
 
