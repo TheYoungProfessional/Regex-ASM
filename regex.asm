@@ -88,8 +88,11 @@ la $t4, storeBuffer #extra buffer to store plain values
 noBracketLoop: #jumping to this loop if no brackets are present
 lb $t1, 0($t0)
 beq $t1, $zero, doneNoBracketLoop #when we reach end of line we end the loop
+
+sb $t1, 0($t4)
+addi $t4, $t4, 1
+
 addi $t0, $t0, 1
-sb $s4, 0($t0)
 j noBracketLoop
 
 doneNoBracketLoop:
@@ -172,7 +175,108 @@ li $t9, ']'
 bne $t3, $zero, matchBracket #if flag for bracket is 1, process within bracket
 j matchNoBracket
 #######################################################################################################
-matchNoBracket: #NEED TO IMPLEMENT
+matchNoBracket:
+la $t4, storeBuffer   # regex literal
+la $t8, inputBuffer   # input pointer
+
+matchNoBracketLoop:
+lb $t7, 0($t8)        # current input char
+beq $t7, $zero, noBracketDone   # end of input
+
+# attempt to match literal sequence
+la $t4, storeBuffer      # start of literal
+move $t9, $t8            # temporary pointer to scan input
+li $s5, 1                # assume match success
+
+literalMatchLoop:
+lb $t6, 0($t4)           # next char of literal
+beq $t6, $zero, literalMatched   # success, end of literal
+beq $t6, 10, literalMatched      # also handle newline
+    
+lb $t7, 0($t9)           # next char of input
+beq $t7, $zero, literalFailed    # input ended early
+beq $t7, 10, literalFailed       # input newline before literal ends
+bne $t7, $t6, literalFailed      # mismatch
+
+addi $t4, $t4, 1
+addi $t9, $t9, 1
+j literalMatchLoop
+
+literalMatched:
+# Save the match end position
+move $s7, $t9  # t9 points to character after the match
+    
+# print literal
+la $t4, storeBuffer
+printLiteralLoop:
+lb $t6, 0($t4)
+beq $t6, $zero, afterLiteralPrint
+beq $t6, 10, afterLiteralPrint   # handle newline
+    
+li $v0, 11
+move $a0, $t6
+syscall
+    
+addi $t4, $t4, 1
+j printLiteralLoop
+
+afterLiteralPrint:
+# Check if there are more characters to process after this match
+move $t4, $s7  # Position after current match
+    
+# Skip newline/null check since we need to see if ANY character exists
+lb $t6, 0($t4)
+beq $t6, $zero, skipCommaLiteral   # No more characters
+beq $t6, 10, skipCommaLiteral      # Just newline left
+    
+# There are more characters, check if another match is possible
+# by scanning the entire remaining input
+scanRemaining:
+move $t5, $t4  # Start scanning from after current match
+    
+scanLoop:
+lb $t6, 0($t5)
+beq $t6, $zero, skipCommaLiteral   # End of input
+beq $t6, 10, skipCommaLiteral      # End of line
+    
+# Try to match literal starting at t5
+la $t7, storeBuffer
+move $t1, $t5
+    
+tryMatch:
+lb $t2, 0($t7)
+beq $t2, $zero, foundMatch    # Success!
+beq $t2, 10, foundMatch       # Or newline
+lb $t3, 0($t1)
+beq $t3, $zero, scanNext      # Input ended
+beq $t3, 10, scanNext         # Or newline
+bne $t2, $t3, scanNext        # Mismatch
+    
+addi $t7, $t7, 1
+addi $t1, $t1, 1
+j tryMatch
+    
+foundMatch:
+# Another match exists, print comma
+li $v0, 4
+la $a0, comma
+syscall
+j skipCommaLiteral
+    
+scanNext:
+addi $t5, $t5, 1
+j scanLoop
+
+skipCommaLiteral:
+# Continue searching from next character
+addi $t8, $t8, 1
+j matchNoBracketLoop
+
+literalFailed:
+addi $t8, $t8, 1        # advance scan pointer on failure
+j matchNoBracketLoop
+
+noBracketDone:
 jr $ra
 
 matchBracket:
@@ -372,8 +476,6 @@ j negateStarLoop
 doneNegate:
 li $v0, 10
 syscall
-
-
 
 
 
