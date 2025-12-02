@@ -153,7 +153,7 @@ doneParseAfterEscape:
 
 #############################################################################################################
 parseNoBrackets:
-li $t3, 0 0
+li $t3, 0 #we set the flag indicating brackets to 0
 la $t4, storeBuffer #extra buffer to store plain values
     
 noBracketLoop: #jumping to this loop if no brackets are present
@@ -895,6 +895,8 @@ nextCharNoRange:
     j matchNoRangeLoop
 
 matchStarRange:
+    beq $s2, $zero, matchStarNoRange
+    li $t6, ','
     li $t5, 0
     
 matchStarLoop:
@@ -925,6 +927,62 @@ skipCommaA:
 
 donePrintStar:
     jr $ra
+    
+######################################################################################
+
+#[abc]* test case 
+
+######################################################################################
+matchStarNoRange:
+li $t3,1
+
+matchStarNoRangeLoop:
+move $t4, $t5 #pointing to start 
+lb $t7, 0($t8) #pointer to input buffer 
+beq $t7, $zero, doneNoRangePrint #ending print when we reach end of line 
+li $t2, 0
+
+noRangeStarLoop:
+lb $t6, 0($t4) #pointer to store buffer
+beq $t6, $zero, printStarCommaMaybe
+beq $t7, $zero, doneNoRangePrint
+beq $t7, $t6, matchElement
+addi $t4, $t4,1
+j noRangeStarLoop
+
+matchElement:
+li $t2, 1
+
+printStarCommaMaybe:
+beq $t2, $zero, skipCommaNoRange
+beq $t3, $zero, printCharStarRange
+
+li $v0, 4
+la $a0, comma #print comma between each character
+syscall 
+
+printCharStarRange:
+li $v0, 11
+move $a0, $t7
+syscall
+
+li $t3, 0
+
+addi $t8, $t8, 1
+j matchStarNoRangeLoop
+
+nextElement:
+addi $t4, $t4, 1
+j noRangeStarLoop
+
+skipCommaNoRange:
+li $t3, 1
+addi $t8, $t8, 1
+j matchStarNoRangeLoop
+
+doneNoRangePrint:
+li $v0, 10
+syscall
 
 negateStarRange:
     li $t5, 0
