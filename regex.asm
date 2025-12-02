@@ -43,6 +43,7 @@ main:
     li $v0, 10
     syscall
 
+<<<<<<< Updated upstream
 #############################################################################################################
 # PARSE LOGIC
 #############################################################################################################
@@ -137,6 +138,12 @@ addi $t0, $t0, 4
 j doneParse
 
 =======
+=======
+#############################################################################################################
+# PARSE LOGIC
+#############################################################################################################
+
+>>>>>>> Stashed changes
 parseRegex:
     la $t0, regexBuffer
     la $t4, storeBuffer
@@ -169,6 +176,9 @@ parseRegex:
     beq $t1, $t6, parseBrackets
     
     j parseNoBrackets
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
 #############################################################################################################
@@ -594,12 +604,16 @@ matchNoBracket:
 
 matchBracket:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 beq $s3, $zero, matchNoRange #if flag for range is zero, process value within bracket not as a range
 =======
+=======
+>>>>>>> Stashed changes
     beq $s3, $zero, matchNoRange
     bne $s2, $zero, negateStarRange
     bne $t2, $zero, matchStarRange
     j matchRange
+<<<<<<< Updated upstream
 >>>>>>> Stashed changes
 
 matchRange:
@@ -622,6 +636,10 @@ nextCharRange: #look to next character in range, run match logic again
 addi $t8, $t8, 1
 j matchRange
 =======
+=======
+
+matchRange:
+>>>>>>> Stashed changes
     lb $t7, 0($t8)
     beq $t7, $zero, donePrint
     beq $t7, 10, donePrint
@@ -639,12 +657,16 @@ j matchRange
 nextCharRange:
     addi $t8, $t8, 1
     j matchRange
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
 donePrint:
     jr $ra
 
 matchNoRange:
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 li $t3, 0
 bne $t2, $zero, matchStarNoRange #Checking if input entered is in the format [a-z]*
@@ -653,6 +675,8 @@ move $t4, $t5 #pointing to start
 beq $t7, $zero, donePrint #ending print when we reach end of line 
 
 =======
+=======
+>>>>>>> Stashed changes
     li $t5, 0
     la $t4, storeBuffer
     move $t5, $t4
@@ -664,6 +688,9 @@ matchNoRangeLoop:
     
     move $t4, $t5
     
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 noRangeLoop:
     lb $t6, 0($t4)
@@ -687,6 +714,7 @@ nextCharNoRange:
 
 matchStarRange:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 li $t6, ','
 li $t5, 0 #we will use this to indicate whether ',' has been printed or not
 
@@ -708,6 +736,11 @@ j matchStarLoop
     li $t5, 0
     
 matchStarLoop:
+=======
+    li $t5, 0
+    
+matchStarLoop:
+>>>>>>> Stashed changes
     lb $t7, 0($t8)
     beq $t7, $zero, donePrintStar
     beq $t7, 10, donePrintStar
@@ -721,6 +754,9 @@ matchStarLoop:
     li $t5, 1
     addi $t8, $t8, 1
     j matchStarLoop
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
 nextStarChar:
@@ -735,6 +771,7 @@ skipComma:
     j matchStarLoop
 
 donePrintStar:
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 li $v0, 10
 syscall
@@ -781,6 +818,8 @@ nextStarNoRange:
 addi $t8, $t8, 1
 j matchStarNoRange
 =======
+=======
+>>>>>>> Stashed changes
     jr $ra
 
 negateStarRange:
@@ -814,5 +853,9 @@ skipNegateComma:
     j negateStarLoop
 
 doneNegate:
+<<<<<<< Updated upstream
+    jr $ra
+>>>>>>> Stashed changes
+=======
     jr $ra
 >>>>>>> Stashed changes
