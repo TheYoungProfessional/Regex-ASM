@@ -197,13 +197,12 @@ parseNoRange:
     
 parseNoRangeLoop:
     lb $t1, 0($t0)
-    li $t6, ']'
-    beq $t6, $t1, doneNoRangeLoop
     sb $t1, 0($t4)
+    beq $zero, $t1, doneNoRangeLoop
     addi $t4, $t4, 1
     addi $t0, $t0, 1
     li $t6, '*'
-beq $t6, $t1, parseStarNoRange
+    beq $t6, $t1, parseStarNoRange
     j parseNoRangeLoop
 
 doneNoRangeLoop:
@@ -215,7 +214,6 @@ doneNoRangeLoop:
 
 parseStarNoRange:
     li $t2, 1
-    addi $t0, $t0, 1
     j matchStart
 
 parseRange:
@@ -837,7 +835,6 @@ jr $ra
 matchBracket:
     beq $s3, $zero, matchNoRange
     bne $s2, $zero, negateStarRange
-    bne $t2, $zero, matchStarRange
     j matchRange
 
 matchRange:
@@ -863,6 +860,7 @@ donePrint:
     jr $ra
 
 matchNoRange:
+    bne $t2, $zero, matchStarNoRange
     li $t5, 0
     la $t4, storeBuffer
     move $t5, $t4
