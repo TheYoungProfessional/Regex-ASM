@@ -1,6 +1,19 @@
 #
-# CS 35101 - Regex Parser
-# Test Cases 4, 5, and 8 Implementation
+
+#
+
+#
+
+#
+
+# Amitha Ajithkumar, Michael Overman, Garrett W
+
+#
+
+#
+
+#
+
 #
 .data
 userInput1:     .asciiz "Please enter a regex to process: "
@@ -15,25 +28,28 @@ out8:           .asciiz "\nGoodbye! \n"
 .globl main
 
 main:
-    li $v0, 4
-    la $a0, userInput1
-    syscall
-    
-    li $v0, 8
-    la $a0, regexBuffer
-    li $a1, 200
-    syscall
-    
-    li $v0, 4
-    la $a0, userInput2
-    syscall
-    
-    li $v0, 8
-    la $a0, inputBuffer
-    li $a1, 200
-    syscall
-    
-    jal parseRegex
+li $v0, 4   #v0 is 4 to print a string
+la $a0, userInput1 #setting a0 to the appropriate prompt
+syscall #ask for user regex input
+
+
+li $v0, 8  #setting v0 as 8 to accept a string input
+la $a0, regexBuffer #setting a0 to the space we reserved in the memory
+li $a1, 200 #allocating space of size 200
+syscall #receive user regex input
+
+
+li $v0, 4   #v0 is 4 to print a string
+la $a0, userInput2 #setting a0 to the appropriate prompt
+syscall #ask for user test string input
+
+
+li $v0, 8  #setting v0 as 8 to accept a string input
+la $a0, inputBuffer #setting a0 to the space we reserved in the memory
+li $a1, 200 #allocating space of size 200
+syscall #receive user test string input
+
+jal parseRegex
     
     # Print goodbye message and exit
     la $a0, out8
@@ -43,107 +59,10 @@ main:
     li $v0, 10
     syscall
 
-<<<<<<< Updated upstream
 #############################################################################################################
 # PARSE LOGIC
 #############################################################################################################
 
-<<<<<<< Updated upstream
-parseRegex: #initiate parsing
-la $t0, regexBuffer #
-la $t4 storeBuffer #where we will store ranges/ strings like abc to match
-li $t1, 0 #initializing tmp registers and s registers to 0 for reuse after being used in previous functions
-li $t2, 0  #flag indicating we have to process *
-li $t3, 0  #flag indicating bracket for matching
-li $s0, 0 #use this to store lower value for range
-li $s1, 0 #use this to store upper value for range
-li $s2, 0 #flag indicating negation for matching
-la $t4, storeBuffer #storing range to process user input
-li $s3, 0 #flag indicating whether there is a range of values to match- 0 if no range 1 if there is a range
-li $s4, 0 #using this to count how many elements are present for matches without [], for example, abc
-li $t5, 0 
-li $t6, 0
-li $t7, 0
-li $t8, 0
-li $t9, 0
-
-lb $t1, 0($t0) #loads in regex
-li $t6, '['
-beq $t1, $t6, parseBrackets
-
-parseNoBrackets:
-li $t3, 0   #we set the flag indicating brackets to 0
-la $t4, storeBuffer
-
-noBracketLoop: #jumping to this loop if no brackets are present
-lb $t1, 0($t0)
-beq $t1, $zero, doneNoBracketLoop #when we reach end of line we end the loop
-addi $t0, $t0, 1
-addi $s4, $s4, 1  #count the number of elements to print exact match for regex with no brackets
-j noBracketLoop
-
-doneNoBracketLoop:
-j matchStart  #start matching after parsing 
-
-parseBrackets:
-addi $t0, $t0, 1
-li $t3, 1   #setting bracket flag to 1, telling code we have brackets
-lb $t1, 0($t0)
-lb $t5, 1($t0)
-li $t7, '^'
-beq $t5, $t7, parseNegation
-li $t6, '-'
-beq $t5, $t6, parseRange
-j parseNoRange
-
-parseNoRange:
-li $s3, 0 #setting no range flag to 0
-la $t4, storeBuffer
-
-parseNoRangeLoop:
-beq $t1, $zero, doneNoRangeLoop #finish when we reach ]
-lb $t1, 0($t0)
-sb $t1, 0($t4)    #storing string to buffer to process 
-addi $t4, $t4, 1
-addi $t0, $t0, 1
-li $t6, '*'
-beq $t6, $t1, parseStarNoRange
-j parseNoRangeLoop
-
-doneNoRangeLoop:
-j matchStart
-
-parseStarNoRange:
-li $t2, 1
-
-doneParse:
-lb $t1, 0($t0) 
-li $t6, '*'
-beq $t6, $t1, parseStar
-j matchStart
-
-parseStar:
-li $t2, 1 #setting star flag to 1
-j matchStart
-
-parseNegation:
-li $s2, 1
-addi $t0, $t0, 1
-
-parseRange:
-li $s3, 1
-lb $s0, 0($t0) #storing the lesser value in the range
-lb $s1, 2($t0)    #storing the greater value in the range
-addi $t0, $t0, 4
-j doneParse
-
-=======
-=======
-#############################################################################################################
-# PARSE LOGIC
-#############################################################################################################
-
->>>>>>> Stashed changes
 parseRegex:
     la $t0, regexBuffer
     la $t4, storeBuffer
@@ -176,10 +95,6 @@ parseRegex:
     beq $t1, $t6, parseBrackets
     
     j parseNoBrackets
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
 #############################################################################################################
 # NEW: Parse dot (.) - Test Cases 4 & 5
@@ -240,10 +155,10 @@ doneParseAfterEscape:
 
 #############################################################################################################
 parseNoBrackets:
-    li $t3, 0
-    la $t4, storeBuffer
+li $t3, 0   #we set the flag indicating brackets to 0
+la $t4, storeBuffer #extra buffer to store plain values
     
-noBracketLoop:
+noBracketLoop: #jumping to this loop if no brackets are present
     lb $t1, 0($t0)
     beq $t1, $zero, doneNoBracketLoop
     beq $t1, 10, doneNoBracketLoop
@@ -257,29 +172,29 @@ doneNoBracketLoop:
     j matchStart
 
 parseBrackets:
-    addi $t0, $t0, 1
-    li $t3, 1
-    lb $t1, 0($t0)
-    li $t7, '^'
-    beq $t1, $t7, parseNegation
-    
-    lb $t5, 1($t0)
-    li $t6, '-'
-    beq $t5, $t6, parseRange
-    j parseNoRange
+addi $t0, $t0, 1
+li $t3, 1   #setting bracket flag to 1, telling code we have brackets
+lb $t1, 0($t0)
+li $t7, '^'
+beq $t1, $t7, parseNegation
+
+lb $t5, 1($t0) #peeking ahead by a byte (the '[' bracket) to see if there is a ^ after it
+li $t6, '-'
+beq $t5, $t6, parseRange
+j parseNoRange
 
 parseNegation:
-    addi $t0, $t0, 1
-    li $s2, 1
-    li $s3, 1
-    lb $s0, 0($t0)
-    addi $t0, $t0, 2
-    lb $s1, 0($t0)
-    addi $t0, $t0, 1
-    j doneParse
+addi $t0, $t0, 1
+li $s2, 1   #setting s2 to 1 to indicate that negation boolean = 1 
+li $s3, 1   #setting s3 to 1 indicating range is present
+lb $s0, 0($t0) #storing the lesser value in the range
+addi $t0, $t0, 2
+lb $s1, 0($t0)    #storing the greater value in the range
+addi $t0, $t0, 1
+j doneParse
 
 parseNoRange:
-    li $s3, 0
+    li $s3, 0 #setting no range flag to 0
     la $t4, storeBuffer
     
 parseNoRangeLoop:
@@ -378,7 +293,7 @@ matchStart:
     la $t4, storeBuffer
     move $t5, $t4
     la $t8, inputBuffer    # Load input buffer address into $t8
-    
+        #holds input for non range values, ex:abc, etc
     # Check which pattern to match
     bne $s5, $zero, checkDotStar  # Dot flag set?
     bne $s6, $zero, matchEscapePattern  # Escape flag set?
@@ -603,43 +518,12 @@ matchNoBracket:
     jr $ra
 
 matchBracket:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-beq $s3, $zero, matchNoRange #if flag for range is zero, process value within bracket not as a range
-=======
-=======
->>>>>>> Stashed changes
     beq $s3, $zero, matchNoRange
     bne $s2, $zero, negateStarRange
     bne $t2, $zero, matchStarRange
     j matchRange
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
 
 matchRange:
-<<<<<<< Updated upstream
-bne $t2, $zero, matchStarRange #Checking if input entered is in the format [a-z]*
-lb $t7, 0($t8) #pointer to input buffer
-beq $t7, $zero, donePrint
-blt $t7, $s0, nextCharRange
-bgt $t7, $s1, nextCharRange
-
-li $v0, 11
-move $a0, $t7
-syscall
-
-li $v0, 4
-la $a0, comma #print comma between each character
-syscall 
-
-nextCharRange: #look to next character in range, run match logic again
-addi $t8, $t8, 1
-j matchRange
-=======
-=======
-
-matchRange:
->>>>>>> Stashed changes
     lb $t7, 0($t8)
     beq $t7, $zero, donePrint
     beq $t7, 10, donePrint
@@ -657,26 +541,11 @@ matchRange:
 nextCharRange:
     addi $t8, $t8, 1
     j matchRange
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
 donePrint:
     jr $ra
 
 matchNoRange:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-li $t3, 0
-bne $t2, $zero, matchStarNoRange #Checking if input entered is in the format [a-z]*
-lb $t7, 0($t8) #pointer to input buffer
-move $t4, $t5 #pointing to start 
-beq $t7, $zero, donePrint #ending print when we reach end of line 
-
-=======
-=======
->>>>>>> Stashed changes
     li $t5, 0
     la $t4, storeBuffer
     move $t5, $t4
@@ -688,10 +557,6 @@ matchNoRangeLoop:
     
     move $t4, $t5
     
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 noRangeLoop:
     lb $t6, 0($t4)
     beq $t6, $zero, nextCharNoRange
@@ -713,34 +578,9 @@ nextCharNoRange:
     j matchNoRangeLoop
 
 matchStarRange:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-li $t6, ','
-li $t5, 0 #we will use this to indicate whether ',' has been printed or not
-
-matchStarLoop:
-lb $t7, 0($t8) #pointer to input buffer 
-beq $t7, $zero, donePrintStar
-blt $t7, $s0, nextStarChar
-bgt $t7, $s1, nextStarChar
-
-li $v0, 11
-move $a0, $t7
-syscall
-
-li $t5, 1
-addi $t8, $t8, 1
-
-j matchStarLoop
-=======
     li $t5, 0
     
 matchStarLoop:
-=======
-    li $t5, 0
-    
-matchStarLoop:
->>>>>>> Stashed changes
     lb $t7, 0($t8)
     beq $t7, $zero, donePrintStar
     beq $t7, 10, donePrintStar
@@ -754,10 +594,6 @@ matchStarLoop:
     li $t5, 1
     addi $t8, $t8, 1
     j matchStarLoop
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
 nextStarChar:
     beq $t5, $zero, skipComma
@@ -771,55 +607,6 @@ skipComma:
     j matchStarLoop
 
 donePrintStar:
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-li $v0, 10
-syscall
-
-######################################################################################
-
-matchStarNoRange:
-li $t6, ','
-lb $t7, 0($t8) #pointer to input buffer
-move $t4, $t5 #pointing to start to the store buffer
-beq $t7, $zero, donePrint #ending print when we reach end of line 
-
-# we iterate through each character in the store buffer, and print matches 
-starNoRangeLoop:
-lb $t6, 0($t4)
-beq $t6, $zero, nextStarNoRange #going to next char in store buffer to check if we reach the end
-beq $t7, $t6, printNoStarRange
-beq $t3, $zero, printCommaStar
-addi $t4, $t4, 1
-j noStarRangeLoop
-
-printCommaStar:
-bne $t3, $zero, noComma
-
-li $v0, 4
-la $a0, comma #print comma between each character
-syscall 
-
-li $t3, 1
-
-j noStarRangeLoop
-
-noComma:
-addi $t4, $t4, 1
-j noStarRangeLoop
-
-printStarNoRange:
-li $v0, 11
-move $a0, $t7
-syscall
-bne $t3, $zero, noComma
-
-nextStarNoRange:
-addi $t8, $t8, 1
-j matchStarNoRange
-=======
-=======
->>>>>>> Stashed changes
     jr $ra
 
 negateStarRange:
@@ -853,9 +640,4 @@ skipNegateComma:
     j negateStarLoop
 
 doneNegate:
-<<<<<<< Updated upstream
     jr $ra
->>>>>>> Stashed changes
-=======
-    jr $ra
->>>>>>> Stashed changes
